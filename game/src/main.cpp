@@ -4,29 +4,29 @@
 #include "rlImGui.h"
 
 // Rigidbody class
-class Rigidbody {
+class RigidbodyBall {
 public:
     Vector2 position;
     Vector2 velocity;
 
-    Rigidbody(float posX = 0.0f, float posY = 0.0f, float velX = 0.0f, float velY = 0.0f) : position{ posX, posY }, velocity{ velX, velY } {}
+    RigidbodyBall(float posX = 0.0f, float posY = 0.0f, float velX = 0.0f, float velY = 0.0f) : position{ posX, posY }, velocity{ velX, velY } {}
 };
 
 // Agent class
-class Agent {
+class AgentBall {
 public:
-    Rigidbody rigidbody;
+    RigidbodyBall rigidbody;
     // Add any extra data needed for the agent
     std::string sprite;
     float maxSpeed;
     float maxAcceleration;
 
-    Agent(float posX = 0.0f, float posY = 0.0f, float velX = 0.0f, float velY = 0.0f, const std::string& spr = "", float maxSpd = 0.0f, float maxAcc = 0.0f)
+    AgentBall(float posX = 0.0f, float posY = 0.0f, float velX = 0.0f, float velY = 0.0f, const std::string& spr = "", float maxSpd = 0.0f, float maxAcc = 0.0f)
         : rigidbody(posX, posY, velX, velY), sprite(spr), maxSpeed(maxSpd), maxAcceleration(maxAcc) {}
 };
 
 // Update function
-void update(Rigidbody& rigidbody, float deltaTime) {
+void update(RigidbodyBall& rigidbody, float deltaTime) {
     // Calculate the next frame state of the Rigidbody object
     rigidbody.position.x += rigidbody.velocity.x * deltaTime;
     rigidbody.position.y += rigidbody.velocity.y * deltaTime;
@@ -89,10 +89,10 @@ int main(void) {
     SetTargetFPS(60);
 
     // Create a container of Rigidbody objects
-    std::vector<Rigidbody> rigidbodies;
+    std::vector<RigidbodyBall> rigidbodies;
 
     // Create a container of Agent objects
-    std::vector<Agent> agents;
+    std::vector<AgentBall> agents;
 
     // Add some agents to the container
     agents.emplace_back(0.0f, 0.0f, 0.0f, 0.0f, "Agent1", 800.0f, 800.0f);
