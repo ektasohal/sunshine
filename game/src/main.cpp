@@ -68,26 +68,28 @@ void generateTiles() {
         }
     }
     for (int i = 0; i < totalTiles; ++i) {
-        Tile& tile = tiles[i];
-
         int row = i / cols;
         int col = i % cols;
 
+        Tile& currentTile = tiles[i];
+
         if (row > 0) {
-            tile.connectedTiles.push_back(&tiles[(row - 1) * cols + col]); // Connect to tile above
+            currentTile.connectedTiles.push_back(&tiles[i - cols]); // Add top tile
         }
+
         if (row < rows - 1) {
-            tile.connectedTiles.push_back(&tiles[(row + 1) * cols + col]); // Connect to tile below
+            currentTile.connectedTiles.push_back(&tiles[i + cols]); // Add bottom tile
         }
+
         if (col > 0) {
-            tile.connectedTiles.push_back(&tiles[row * cols + (col - 1)]); // Connect to tile on the left
+            currentTile.connectedTiles.push_back(&tiles[i - 1]); // Add left tile
         }
+
         if (col < cols - 1) {
-            tile.connectedTiles.push_back(&tiles[row * cols + (col + 1)]); // Connect to tile on the right
+            currentTile.connectedTiles.push_back(&tiles[i + 1]); // Add right tile
         }
     }
 }
-
 
 void drawAdjacency(const std::vector<Tile>& tiles) {
     const Color lineColor = GREEN;
@@ -102,11 +104,20 @@ void drawAdjacency(const std::vector<Tile>& tiles) {
         }
 
         Vector2 circleCenter = { tile.position.x + TILE_SIZE / 2, tile.position.y + TILE_SIZE / 2 };
-        DrawCircle(static_cast<int>(circleCenter.x), static_cast<int>(circleCenter.y), TILE_SIZE / 4, GREEN);
+        DrawCircle(static_cast<int>(circleCenter.x), static_cast<int>(circleCenter.y), TILE_SIZE / 4, ORANGE);
 
         for (const Tile* connectedTile : tile.connectedTiles) {
             Vector2 connectedCenter = { connectedTile->position.x + TILE_SIZE / 2, connectedTile->position.y + TILE_SIZE / 2 };
             DrawLineEx(circleCenter, connectedCenter, 2, lineColor);
+        }
+    }
+
+    // Draw green lines through the center of connecting tiles
+    for (const Tile& tile : tiles) {
+        Vector2 currentCenter = { tile.position.x + TILE_SIZE / 2, tile.position.y + TILE_SIZE / 2 };
+        for (const Tile* connectedTile : tile.connectedTiles) {
+            Vector2 connectedCenter = { connectedTile->position.x + TILE_SIZE / 2, connectedTile->position.y + TILE_SIZE / 2 };
+            DrawLineEx(currentCenter, connectedCenter, 1, lineColor); // Draw line from current tile to connected tile with thickness 1
         }
     }
 
@@ -117,7 +128,7 @@ void drawAdjacency(const std::vector<Tile>& tiles) {
             Vector2 nextPos = playerPath[i + 1];
             Vector2 lineStart = { currentPos.x + TILE_SIZE / 2, currentPos.y + TILE_SIZE / 2 };
             Vector2 lineEnd = { nextPos.x + TILE_SIZE / 2, nextPos.y + TILE_SIZE / 2 };
-            DrawLineEx(lineStart, lineEnd, 2, RED);
+            DrawLineEx(lineStart, lineEnd, 2, BLUE);
         }
     }
 }
@@ -182,6 +193,7 @@ void visualizeDijkstra() {
     const Color pathColor = PINK;
     const Color visitedColor = GREEN;
     const Color textColor = GRAY;
+    const Color currentColor = BLUE;
 
     std::vector<Tile>& mutableTiles = const_cast<std::vector<Tile>&>(tiles);
 
@@ -193,40 +205,15 @@ void visualizeDijkstra() {
     }
 
     for (Tile& tile : mutableTiles) {
-        if (tile.isWall) {
-            DrawRectangle(static_cast<int>(tile.position.x), static_cast<int>(tile.position.y), TILE_SIZE, TILE_SIZE, RED);
+        if (tile.visited) {
+            tile.color = visitedColor;
+            std::string costText = intToString(static_cast<int>(tile.costToReach));
+            DrawText(costText.c_str(), static_cast<int>(tile.position.x + TILE_SIZE / 2 - MeasureText(costText.c_str(), 20) / 2), static_cast<int>(tile.position.y + TILE_SIZE / 2 - 10), 20, textColor);
         }
-        else if (tile.visited) {
-            DrawRectangle(static_cast<int>(tile.position.x), static_cast<int>(tile.position.y), TILE_SIZE, TILE_SIZE, visitedColor);
-            DrawText(intToString(static_cast<int>(tile.costToReach)).c_str(), static_cast<int>(tile.position.x + TILE_SIZE / 2 - MeasureText(intToString(static_cast<int>(tile.costToReach)).c_str(), 20) / 2), static_cast<int>(tile.position.y + TILE_SIZE / 2 - 10), 20, textColor);
-        }
-        else {
-            DrawRectangle(static_cast<int>(tile.position.x), static_cast<int>(tile.position.y), TILE_SIZE, TILE_SIZE, tile.color);
-            DrawText(intToString(static_cast<int>(tile.costToReach)).c_str(), static_cast<int>(tile.position.x + TILE_SIZE / 2 - MeasureText(intToString(static_cast<int>(tile.costToReach)).c_str(), 20) / 2), static_cast<int>(tile.position.y + TILE_SIZE / 2 - 10), 20, textColor);
-        }
+
     }
 
-    // Draw line on player's path
-    if (playerPath.size() > 1) {
-        for (size_t i = 0; i < playerPath.size() - 1; ++i) {
-            Vector2 currentPos = playerPath[i];
-            Vector2 nextPos = playerPath[i + 1];
-            Vector2 lineStart = { currentPos.x + TILE_SIZE / 2, currentPos.y + TILE_SIZE / 2 };
-            Vector2 lineEnd = { nextPos.x + TILE_SIZE / 2, nextPos.y + TILE_SIZE / 2 };
-            DrawLineEx(lineStart, lineEnd, 2, pathColor);
-        }
-    }
-}
 
-
-void resetTiles() {
-    for (Tile& tile : tiles) {
-        tile.visited = false;
-        tile.costToReach = FLT_MAX;
-        tile.previousNode = nullptr;
-    }
-
-    playerPath.clear();
 }
 
 int main() {
@@ -262,22 +249,20 @@ int main() {
             }
         }
 
-       /* for (Tile& tile : tiles) {
-            tile.color = WHITE;
+        for (Tile& tile : tiles) {
+            tile.color = BLACK;
         }
-        */
+
         for (Tile& tile : tiles) {
             tile.visited = false;
             tile.costToReach = FLT_MAX;
             tile.previousNode = nullptr;
         }
 
-        resetTiles();
         runDijkstra();
         visualizeDijkstra();
         drawAdjacency(tiles);
 
-        DrawRectangle(static_cast<int>(character.bounds.x), static_cast<int>(character.bounds.y), static_cast<int>(character.bounds.width), static_cast<int>(character.bounds.height), YELLOW);
         DrawRectangleRec(character.bounds, BLUE);
 
         EndDrawing();
