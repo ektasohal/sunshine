@@ -32,8 +32,7 @@ Character character;
 Tile* startNode;
 Tile* goalNode;
 Tile* currentNode;
-std::vector<Vector2> playerPath; // Stores player's path
-
+std::vector<Vector2> playerPath;
 std::string intToString(int value) {
     std::stringstream ss;
     ss << value;
@@ -93,7 +92,7 @@ void generateTiles() {
 
 void drawAdjacency(const std::vector<Tile>& tiles) {
     const Color lineColor = GREEN;
-    const Color wallColor = RED;
+    const Color wallColor = BLACK;
 
     for (const Tile& tile : tiles) {
         if (tile.isWall) {
@@ -190,7 +189,7 @@ void runDijkstra() {
 }
 
 void visualizeDijkstra() {
-    const Color pathColor = PINK;
+    const Color pathColor = RED;
     const Color visitedColor = GREEN;
     const Color textColor = GRAY;
     const Color currentColor = BLUE;
@@ -249,9 +248,9 @@ int main() {
             }
         }
 
-        for (Tile& tile : tiles) {
-            tile.color = BLACK;
-        }
+       // for (Tile& tile : tiles) {
+         //   tile.color = BLACK;
+        //}
 
         for (Tile& tile : tiles) {
             tile.visited = false;
